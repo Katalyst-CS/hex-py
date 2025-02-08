@@ -1,46 +1,52 @@
-version: '3.8'
-
 services:
-  app:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    ports:
-      - "5000:5000"
+  # PostgreSQL Service
+  postgres:
+    image: postgres:15
+    container_name: postgres
     environment:
-      - FLASK_ENV=development
-      - DATABASE_HOST=db
-      - DATABASE_PORT=3306
-      - DATABASE_USER=root
-      - DATABASE_PASSWORD=example
-      - DATABASE_NAME=exampledb
-    depends_on:
-      - db
-
-  db:
-    image: mysql:8.0
-    container_name: mysql_db
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin123
+      POSTGRES_DB: mydatabase
     ports:
-      - "3306:3306"
-    environment:
-      MYSQL_ROOT_PASSWORD: example
-      MYSQL_DATABASE: exampledb
-      MYSQL_USER: root
-      MYSQL_PASSWORD: example
+      - "5432:5432"
     volumes:
-      - db_data:/var/lib/mysql
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - app_network
 
-  phpmyadmin:
-    image: phpmyadmin:latest
-    container_name: phpmyadmin
+  # pgAdmin Service
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@admin.com
+      PGADMIN_DEFAULT_PASSWORD: admin123
     ports:
       - "8080:80"
-    environment:
-      PMA_HOST: db
-      PMA_USER: root
-      PMA_PASSWORD: example
     depends_on:
-      - db
+      - postgres
+    networks:
+      - app_network
 
+  # RabbitMQ Service 
+  # Comentar si no se usa
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: user
+      RABBITMQ_DEFAULT_PASS: password
+    ports:
+      - "5672:5672"    # RabbitMQ Broker Port
+      - "15672:15672"  # RabbitMQ Management UI
+    networks:
+      - app_network
+
+# Volumes
 volumes:
-  db_data:
+  postgres_data:
+
+# Network
+networks:
+  app_network:
+    driver: bridge
